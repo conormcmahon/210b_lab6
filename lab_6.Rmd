@@ -1,0 +1,327 @@
+---
+title: "lab_6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(kableExtra)
+```
+
+### 1) Grades
+
+**The following anonymized data show the midterm and final exam grades (%) for eight students. The partial ANOVA table provides sum of squares and mean squares. What is the repeatability of grade performance?**
+
+```{r}
+
+grade_data <- data.frame(individual = (1:8),
+                         midterm = c(78,84,94,82,58,62,81,80),
+                         final = c(81,65,75,62,60,86,92,89))
+  
+sum(grade_data$midterm^2 + grade_data$final^2)
+
+```
+
+
+#### a) Calculate sA2from the mean squares and the sample size. What variance component does this quantity estimate?
+
+\[
+S_A^2 = \frac{MS_{groups} - MS_{error}}{n}
+\]
+
+```{r}
+
+S_a2 <- (163.71-119.56)/2
+
+```
+
+The SA2 value we found was **`r S_a2`**. This variance component corresponds to the amount of variation associated with actual differences between individual students in performance on this kind of test. 
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+#### b) Calculate the repeatability using sA2and MSerror.
+
+
+\[
+repeatability = \frac{S_A^2}{S_A^2 + MS_{error}}
+\]
+
+```{r}
+
+repeatability <- S_a2 / (S_a2 + 119.56)
+
+```
+
+The repeatability was **`r repeatability`**. 
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+#### c) Interpret the repeatability you just calculated. What fraction of the variance among test scores is estimated to reflect true differences among students in performance, and what fraction is measurement variance from test to test within students?
+
+Higher repeatability values indicate that the majority of variation is based on differences between students in test-taking performance. Low repeatability indicates that most of the variation is due to random differences in performance for individual students between subsequent tests. 
+
+The repeatability value we got was quite low, which indicates that most of the variation we observed is due to random error between subsequent test performance for individual students. We can visually check this by making a plot of the test performance for each student on the midterm and final:
+
+```{r}
+
+ggplot(data=grade_data) + 
+  geom_point(aes(x=individual,y=midterm),col="red") +
+  geom_point(aes(x=individual,y=final),col="blue") + 
+  ggtitle("Test Performance by Student") + 
+  xlab("Student ID") + 
+  ylab("Test Grade") + 
+  labs(caption="Test performance on midterm (red) and final (blue) tests across a set of 8 students.")
+
+```
+
+Looking at this plot seems to corroborate our conclusion above... For individual students, the difference in final vs. midterm performance seems larger than the difference on tests across students. 
+
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+#### d) What assumptions are you making when estimating repeatability to test scores? 
+
+1) Measurements in each group are a random sample from the group population (in this case this seems reasonable since we probably have a population census of the class)
+
+2) The variable is normally distributed in each of the k populations (this seems like a reasonable assumption but is difficult to validate with such a small sample size)
+
+3) The variance is the same across all k populations
+
+```{r}
+
+var(grade_data$midterm)
+var(grade_data$final)
+
+```
+
+These sample variances differ but not by a huge margin, and the sample size is pretty small, so it's difficult to say whether the population variances differ. 
+
+4) Groups are randomly sampled (i.e. the 'final' and 'midterm' are valid random representatives of the total population of tests)
+
+5) The group means have a normal distribution in the population.
+
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+
+
+### 2) Caffeine
+
+**Many humans like the effect of caffeine, but it occurs in plants as a deterrent to herbivory by animals. Caffeine is also found in flower nectar, and nectar is meant as a reward for pollinators, not a deterrent. How does caffeine in nectar affect visitation by pollinators? Singaravelan et al. (2005) set up feeding stations where bees were offered a choice between a control solution with 20% sucrose or a caffeinated solution with 20% sucrose plus some quantity of caffeine. Over the course of the experiment, four different concentrations of caffeine were provided: 50, 100, 150, and 200 ppm. The response variable was the difference between the amount of nectar consumed from the caffeine feeders and that removed from the control feeders at the same station (in grams). Here are the data:**
+
+
+```{r}
+
+caffeine <- data.frame(
+  ppm_50 = c(-0.4, 0.34, 0.19, 0.05, -0.14100),
+  ppm_100 = c(0.01, -0.39, -0.08, -0.09, -0.31150),
+  ppm_150 = c(0.65, 0.53, 0.39, -0.15, 0.46200),
+  ppm_200 = c(0.24, 0.44, 0.13, 1.03, 0.05))
+
+```
+
+Does the mean amount of nectar taken depend on the concentration of caffeine in the nectar? Carry out ANOVA step by step in the following subsections:
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+#### a) State the null and alternate hypotheses appropriate to this question.
+
+Ho: There is no difference in mean nectar consumption between groups based on the amount of caffeine in the nectar.
+
+Ha: There is a difference in mean nectar consumption between at least some groups based on the amount of caffeine in the nectar.
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### b) Calculated the following summary statistics for each group: sample size, sample mean, sample standard deviation.
+
+```{r}
+
+stats <- data.frame(group = c("ppm_50","ppm_100","ppm_150","ppm_200"),
+                    n = rep(5,4),
+                    mean = c(mean(caffeine$ppm_50),mean(caffeine$ppm_100),mean(caffeine$ppm_150),mean(caffeine$ppm_200)),
+                    stdev = c(sd(caffeine$ppm_50),sd(caffeine$ppm_100),sd(caffeine$ppm_150),sd(caffeine$ppm_200)))
+
+kable(stats) %>% kable_styling()
+
+```
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+Based on a quick look at these data, it might be hard to conclude that there's much going on here. In all four cases the standard deviation was greater than or almost equal to the absolute value of the mean, which might make it hard to demonstrate that the observed means are significantly different from zero (it may be hard to show that any of the nectar removal rates differ meaningfully from the control). 
+
+#### c) What is the mean square error?
+
+```{r}
+
+sserr <- sum(stats$stdev^2 * (stats$n-1))
+mserr <- sserr / (16)
+
+```
+
+The mean square error is **`r mserr`**.
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### d) How many degrees of freedom are associated with error?
+
+The number of degrees of freedom associated with error is N - k, which here is 20 - 4 = **16**.
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### e) Calculate the estimate of the grand mean.
+
+```{r}
+
+mean_grand <- sum(stats$mean*stats$n) / sum(stats$n)
+
+```
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### f) Calculate the group sum of squares.
+
+```{r}
+
+ss_group <- sum(stats$n * (stats$mean - mean_grand)^2)
+
+```
+
+The group sum of squares is **`r ss_group`**.
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### g.Calculate the group degrees of freedom and the group mean square.
+
+The group degrees of freedom is 4-1 = **`r 3`**. 
+
+```{r}
+
+ms_group <- ss_group / 3
+
+```
+
+The group mean square is **`r ms_group`**.
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### h) What is F for this example?
+
+```{r}
+
+F_caffeine = ms_group / mserr
+
+```
+
+The F statistic here is **`r F_caffeine`**.
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### i) Find the P-value for this test?
+
+```{r}
+
+p_val_caffeine <- pf(F_caffeine, df1=3, df2=16, lower.tail=F)
+
+```
+
+The p-value for this ANOVA test is **`r p_val_caffeine`**.
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+#### j) Report your results in an ANOVA table.
+
+```{r}
+
+caffeine <- c(-0.4, 0.34, 0.19, 0.05, -0.14100, 0.01, -0.39, -0.08, -0.09, -0.31150, 0.65, 0.53, 0.39, -0.15, 0.46200, 0.24, 0.44, 0.13, 1.03, 0.05)
+dft <- data.frame(visit = caffeine, group = c(rep("ppm_50",5),rep("ppm_100",5),rep("ppm_150",5),rep("ppm_200",5)))
+
+caffeine_aov <- aov(visit ~ group, data=dft)
+
+summary(caffeine_aov)
+
+```
+
+Because we found p_val = 0.023 < 0.05, we can reject the null hypothesis that there is no difference between the mean values for any of our groups. It appears that at least one pairing between treatments for nectar depletion rates in excess of the control rate show mean values which are significantly different. We will need to run a post-hoc test to determine for which treatments this is the case. 
+
+
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+
+
+### 3) Tukey
+
+**Use the same data as the previous question, and carry out the Tukey-Kramer test to find which pairs of sample means differ from each other.Report your results in a table with the following columns: Group i label, Group j label, difference of sample means for group i and j, standard error, value of test statistic q, critical value of q, and your conclusion about the hypothesis being tested.**
+
+
+```{r}
+
+caffeine_thsd <- TukeyHSD(caffeine_aov)
+
+caffeine_tukey <- data.frame(name_i = c("ppm_150", "ppm_200", "ppm_50", "ppm_200", "ppm_50", "ppm_50"),
+                             name_j = c("ppm_100", "ppm_100", "ppm_100", "ppm_150", "ppm_150", "ppm_200"),
+                             difference = as.numeric(caffeine_thsd$group[1:6,1]),
+                             sterr = rep(0,6),
+                             q_val = rep(0,6),
+                             q_crit = rep(0,6),
+                             p_val = rep(0,6),
+                             conclusion = rep("0",6))
+
+caffeine_q <- qtukey(1-as.numeric(caffeine_thsd$group[1:6,4]), nmeans = 4, df = 16)
+
+sterr <- caffeine_q / caffeine_tukey$difference
+
+caffeine_tukey$sterr <- rep(sterr[1],6)
+caffeine_tukey$q_val <- caffeine_q
+caffeine_tukey$q_crit <- rep(qtukey(0.95, nmeans=4, df=16),6)
+caffeine_tukey$p_val <- as.numeric(caffeine_thsd$group[1:6,4])
+caffeine_tukey$conclusion <- c("reject null","reject null","fail to reject null","fail to reject null","fail to reject null","fail to reject null")
+
+kable(caffeine_tukey) %>% kable_styling()
+```
+
+Based on this analysis, we found a significant difference in mean difference over the control treatment for the 150 ppm and 100 ppm pair, and for the 200 ppm and 100 ppm pair. For these two test pairs we can conclude that there was a meaningful difference in response, but we can't for any other pairing. 
+
