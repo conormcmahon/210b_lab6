@@ -325,3 +325,274 @@ kable(caffeine_tukey) %>% kable_styling()
 
 Based on this analysis, we found a significant difference in mean difference over the control treatment for the 150 ppm and 100 ppm pair, and for the 200 ppm and 100 ppm pair. For these two test pairs we can conclude that there was a meaningful difference in response, but we can't for any other pairing. 
 
+
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+
+### 4) Precipitation
+
+**Using the following data: Precipitation at Boston airport (inches)**
+
+```{r}
+
+boston_precip <- data.frame(
+Year = c("1971 II","1972 I","1972 II","1973 I","1973 II","1974 I"),
+Sat = c(0.83,4.66,3.03,3.69,2.35,3.18),
+Sun = c(3.14,4.15,5.8,3.72,3.62,3.28),
+Mon = c(4.2,3.4,2.29,4.29,3.56,1.82),
+Tue = c(1.28,1.74,3.17,2.06,2.27,3.75),
+Wed = c(1.16,3.91,3.5,3.04,4.46,2.07),
+Thur = c(4.25,5.15,3.4,2.3,2.52,3.54),
+Fri = c(2.08,5.06,3.04,4.26,3.36,2.27))
+
+kable(boston_precip) %>% kable_styling()
+
+# Pivot into a longer format with day as a variable, not observation
+boston_precip_long <- boston_precip %>% pivot_longer(2:8, names_to = "Day", values_to = "Rain")
+
+```
+
+#### a. Find the mean and standard deviation for each day of the week.
+
+```{r}
+
+boston_stats <- boston_precip_long %>%
+  mutate(Day = factor(Day, levels=c("Sat","Sun","Mon","Tue","Wed","Thur","Fri"))) %>%
+  group_by(Day) %>%
+  summarize(mean = mean(Rain),
+            stdev = sd(Rain))
+
+kable(boston_stats) %>% kable_styling()
+
+```
+
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+#### b. Perform an analysis of variance to test the null hypothesis that precipitation does not vary by day of the week. Show the group and error sum of squares, the observed Fstatistic, and the critical F-value.
+
+```{r}
+
+boston_precip_daywise <- boston_precip_long %>%
+  pivot_wider(names_from = "Year", values_from = "Rain")
+
+kable(boston_precip_daywise) %>% kable_styling()
+
+boston_aov <- aov(Rain ~ Day, data=boston_precip_long)
+summary(boston_aov)
+
+# Critical F value:
+qf(0.95, df1=6, df2=28)
+
+```
+
+Because the p-value we got (0.323) is relatively large and much bigger than 0.05, we cannot reject the null hypothesis that the mean rainfall on each day of the week is the same. This is not surprising; it would be weird if we had found an effect here!
+
+
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+#### c. Repeat the analysis using data for Pittsburgh. The precipitation at Pittsburgh airport is
+(inches):
+
+```{r}
+
+pitts_precip <- data.frame(
+Year = c("1971 II","1972 I","1972 II","1973 I","1973 II","1974 I"),
+Sat = c(1.64,2.2,2.75,2.23,3.65,4.96),
+Sun = c(5.55,3.37,1.72,4.31,2.66,3),
+Mon = c(3.19,0.78,2.34,2.02,3.95,2.61),
+Tue = c(2.45,2.63,3.4,1.83,2.31,1.75),
+Wed = c(1.44,2.32,3.68,4.35,1.85,2.7),
+Thur = c(1.07,5.57,3.48,4.07,2.63,2.45),
+Fri = c(1.66,2.8,2.5,2.66,1.11,4.06))
+
+kable(pitts_precip) %>% kable_styling()
+
+# Pivot into a longer format with day as a variable, not observation
+pitts_precip_long <- pitts_precip %>% pivot_longer(2:8, names_to = "Day", values_to = "Rain")
+
+
+pitts_stats <- pitts_precip_long %>%
+  mutate(Day = factor(Day, levels=c("Sat","Sun","Mon","Tue","Wed","Thur","Fri"))) %>%
+  group_by(Day) %>%
+  summarize(mean = mean(Rain),
+            stdev = sd(Rain))
+
+kable(pitts_stats) %>% kable_styling()
+
+pitts_aov <- aov(Rain ~ Day, data=pitts_precip_long)
+summary(pitts_aov)
+
+# Critical F value:
+#    The critical F value is the same here, becuase alpha and both degrees of freedom are the same as before
+qf(0.95, df1=6, df2=28)
+
+```
+
+This time we got an even larger overall p-value at 0.638. Again, this means we cannot reject the null hypothesis that there is no difference in rainfall across days. And again this makes sense!
+
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+
+### 5) Example ANOVA
+
+**Assume that an analysis of variance is conducted for a study where there are N = 50 observations and k = 5 categories. Fill in the blanks in the following ANOVA table:**
+
+```{r}
+
+anova_5 <- data.frame(source = c("Group", "Error", "Total"),
+                      'Sum of Squares' = c(0,2000,0),
+                      'df' = c(0,0,0),
+                      'Mean Squares' = c(116.3,0,NA),
+                      F = c(NA,NA,NA),
+                      P = c(NA,NA,NA))
+
+kable(anova_5) %>% kable_styling()
+
+```
+
+**With alpha = 0.05, what is your conclusion regarding the null hypothesis that the means of the categories are equal?**
+
+```{r}
+
+# First, lets set the degrees of freedom in each category:
+
+anova_5$'df' <- c(5-1,50-5,50-1)
+
+# We can estimate the group sum of squares from the mean square:
+
+anova_5$'Sum.of.Squares'[1] <- anova_5$'Mean.Squares'[1] * anova_5$'df'[1]
+
+# We can get the error mean square similarly from the sum of squares:
+
+anova_5$'Mean.Squares'[2] <- anova_5$'Sum.of.Squares'[2] / anova_5$'df'[2]
+
+# The total sum of squares, next...
+
+anova_5$'Sum.of.Squares'[3] <- anova_5$'Sum.of.Squares'[1] + anova_5$'Sum.of.Squares'[2]
+
+# The F ratio, based on the mean squares...
+
+anova_5$'F'[1] <- as.numeric(anova_5$'Mean.Squares'[1])/as.numeric(anova_5$'Mean.Squares'[2])
+
+anova_5$'P'[1] <- pf(as.numeric(anova_5$'F'[1]), df1=anova_5$'df'[1], df2=anova_5$'df'[2], lower.tail=F)
+
+kable(anova_5) %>% kable_styling()
+
+```
+
+Because the p-value we achieved was lower than 0.05, we can reject the null hypothesis that there is no difference in mean values between groups. At least some groups seem meaningfully different from some others. 
+
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+<!-- forced_linebreak -->
+&nbsp; 
+
+
+### 6) More ANOVA Practice
+
+**A study classifies 72 observations into nine groups, with eight observations in each group. The study finds that the variance among the 72 observations is 803. Complete the following ANOVA table:**
+
+
+
+```{r}
+
+anova_6 <- data.frame(source = c("Group", "Error", "Total"),
+                      'Sum of Squares' = c(6000,NA,NA),
+                      'df' = c(NA,NA,NA),
+                      'Mean Squares' = c(116.3,NA,NA),
+                      F = c(NA,NA,NA),
+                      P = c(NA,NA,NA))
+
+kable(anova_6) %>% kable_styling()
+
+```
+
+
+**With alpha = 0.05, what is your conclusion regarding the null hypothesis that the means of the categories are equal?**
+
+```{r}
+# First, lets set the degrees of freedom in each category:
+
+anova_6$'df' <- c(9-1,72-9,72-1)
+
+# We can get the group mean square from the sum of squares:
+
+anova_6$'Mean.Squares'[1] <- anova_6$'Sum.of.Squares'[1] / anova_6$'df'[1]
+
+```
+
+We can use the total variance and the group mean square to find the error mean square: 
+
+\[ S_A^2 = \frac{MS_{groups} - MS_{error}}{n} = Var_{total} - MS_{error} \]
+\[ MS_{error} = \frac{n \bullet Var_{total} - MS_{groups}}{n-1} \]
+
+```{r}
+
+anova_6$'Mean.Squares'[2] <- (9*803 - anova_6$'Mean.Squares'[1])/(9-1)
+
+# We can get the error sum of square from the sum of squares:
+
+anova_6$'Sum.of.Squares'[2] <- anova_6$'Mean.Squares'[2] * anova_6$'df'[2]
+
+# The total sum of squares, next...
+
+anova_6$'Sum.of.Squares'[3] <- anova_6$'Sum.of.Squares'[1] + anova_6$'Sum.of.Squares'[2]
+
+# We can estimate the error sum of squares from the mean square:
+
+anova_6$'Sum.of.Squares'[2] <- anova_6$'Mean.Squares'[2] * anova_6$'df'[2]
+
+# The F ratio, based on the mean squares...
+
+anova_6$'F'[1] <- as.numeric(anova_6$'Mean.Squares'[1])/as.numeric(anova_6$'Mean.Squares'[2])
+
+anova_6$'P'[1] <- pf(as.numeric(anova_6$'F'[1]), df1=anova_6$'df'[1], df2=anova_6$'df'[2], lower.tail=F)
+
+kable(anova_6) %>% kable_styling()
+
+```
+
+Because the p-value we achieved was lower than 0.05, we can reject the null hypothesis that there is no difference in mean values between groups. At least some groups seem meaningfully different from some others. 
+
+
+
+
+### 7) Kruskal-Wallis
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
